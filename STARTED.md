@@ -17,3 +17,19 @@ Ensure that you go bin directory is in the path.
 ```
 go install github.com/adyen/kubectl-rexec@latest
 ```
+
+## Observe events 
+
+Tail the logs of the proxy to see audit events, and ideally set up a logshipping setup that suits you to store them.
+
+```
+kubectl -n kube-system logs -l app=rexec -f
+```
+
+## Use the plugin
+
+The rexec plugin has the same params as the upstream exec command.
+
+```
+kubectl rexec exec -ti some-pod -- bash
+```
