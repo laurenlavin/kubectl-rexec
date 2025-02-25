@@ -1,4 +1,4 @@
-FROM golang:1.23-bookworm AS builder
+FROM golang:1.24-bookworm AS builder
 
 LABEL org.opencontainers.image.source=https://github.com/adyen/kubectl-rexec
 LABEL org.opencontainers.image.description="Rexec proxy"
