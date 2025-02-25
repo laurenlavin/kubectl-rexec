@@ -117,15 +117,15 @@ func (t *TCPLogger) Write(b []byte) (n int, err error) {
 			if frame.Opcode == 0x2 {
 				if auditLogger.GetLevel() == zerolog.TraceLevel {
 					stroke, err := hex.DecodeString(fmt.Sprintf("%x", frame.Payload))
-					SysLogger.Error().Err(err).Msg("failed to parse payload")
-
-					auditLogger.Trace().Str("user", userMap[t.ctxid]).Str("session", t.ctxid).Str("stroke", strings.ReplaceAll(string(stroke), "\u0000", "")).Msg("")
-					asyncAuditChan <- asyncAudit{
-						ctxid: t.ctxid,
-						ascii: frame.Payload,
+					if err != nil {
+						SysLogger.Error().Err(err).Msg("failed to parse payload")
 					}
+					auditLogger.Trace().Str("user", userMap[t.ctxid]).Str("session", t.ctxid).Str("stroke", strings.ReplaceAll(string(stroke), "\u0000", "")).Msg("")
 				}
-
+				asyncAuditChan <- asyncAudit{
+					ctxid: t.ctxid,
+					ascii: frame.Payload,
+				}
 			}
 		}
 	}

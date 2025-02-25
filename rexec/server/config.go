@@ -26,31 +26,26 @@ var ByPassedUsers []string
 var MaxStokesPerLine int
 
 func Init() {
-	var sysLogLevel zerolog.Level
-	sysLogLevel = zerolog.FatalLevel
-	if SysDebugLog {
-		sysLogLevel = zerolog.DebugLevel
-	}
-
-	var auditLogLevel zerolog.Level
-	auditLogLevel = zerolog.InfoLevel
+	auditLevel := zerolog.InfoLevel
 	if AuditFullTraceLog {
-		auditLogLevel = zerolog.TraceLevel
+		auditLevel = zerolog.TraceLevel
 	}
+	sysLevel := zerolog.PanicLevel
+	if SysDebugLog {
+		sysLevel = zerolog.DebugLevel
+	}
+	auditLogger = zerolog.New(os.Stdout).With().Timestamp().Str("facility", "audit").Logger().Level(auditLevel)
+	SysLogger = zerolog.New(os.Stdout).With().Timestamp().Str("facility", "sys").Logger().Level(sysLevel)
 
-	logger := zerolog.New(os.Stdout).With().Timestamp().Logger()
-
-	SysLogger = logger.With().Str("facility", "sys").Logger().Level(sysLogLevel)
-	auditLogger = logger.With().Str("facility", "audit").Logger().Level(auditLogLevel)
 	rawCaCert, err := os.ReadFile("/var/run/secrets/kubernetes.io/serviceaccount/ca.crt")
 	if err != nil {
-		logger.Fatal().Err(err)
+		SysLogger.Fatal().Err(err)
 	}
 	CAPool = x509.NewCertPool()
 	CAPool.AppendCertsFromPEM(rawCaCert)
 	rawToken, err := os.ReadFile("/var/run/secrets/kubernetes.io/serviceaccount/token")
 	if err != nil {
-		logger.Fatal().Err(err)
+		SysLogger.Fatal().Err(err)
 	}
 	token = string(rawToken)
 	proxyMap = make(map[string]bool)
@@ -64,7 +59,7 @@ func Init() {
 	if SecretSauce != "" {
 		_, err = uuid.Parse(SecretSauce)
 		if err != nil {
-			logger.Fatal().Err(err)
+			SysLogger.Fatal().Err(err)
 		}
 	}
 	if MaxStokesPerLine == 0 {
