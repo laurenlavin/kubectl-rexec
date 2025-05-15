@@ -26,7 +26,7 @@ func tcpForwarder(ctx context.Context) {
 	// we setup a unix listener for the specific session
 	listener, err := lc.Listen(ctx, "unix", socketPath)
 	if err != nil {
-		SysLogger.Error().Err(err).Msgf("failed to start listener for %d", ctxid)
+		SysLogger.Error().Err(err).Msgf("failed to start listener for %s", ctxid)
 		return
 	}
 	defer listener.Close()
@@ -41,7 +41,7 @@ func tcpForwarder(ctx context.Context) {
 	for {
 		client, err := listener.Accept()
 		if err != nil {
-			SysLogger.Error().Err(err).Msgf("failed to accept connection at %d", ctxid)
+			SysLogger.Error().Err(err).Msgf("failed to accept connection at %s", ctxid)
 			continue
 		}
 
@@ -73,7 +73,7 @@ func handleTcpConnection(client net.Conn, ctxid string) {
 	// setting up the upstream connection
 	target, err := tls.Dial("tcp", targetAddress, &tls.Config{RootCAs: CAPool})
 	if err != nil {
-		SysLogger.Error().Err(err).Msgf("failed to connect to upstream at %d", ctxid)
+		SysLogger.Error().Err(err).Msgf("failed to connect to upstream at %s", ctxid)
 		client.Close()
 		return
 	}
