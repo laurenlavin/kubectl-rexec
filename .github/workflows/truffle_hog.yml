@@ -4,6 +4,9 @@ on:
 jobs:
   TruffleHog:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
     defaults:
       run:
         shell: bash
