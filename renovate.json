@@ -6,5 +6,6 @@
     "minimumReleaseAge": "21 days",
     "pre-commit": {
         "enabled": true
-    }
+    },
+    "pinDigests": true
 }
