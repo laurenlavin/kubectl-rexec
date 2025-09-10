@@ -1,0 +1,47 @@
+name: Go tests
+
+on:
+  push:
+    branches: [ main]
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        go: ["1.22.x"]   # add "1.21.x" too if you care
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ matrix.go }}
+          cache: true
+
+      - name: Tidy & build
+        run: |
+          go mod tidy
+          go build ./...
+
+      - name: Vet
+        run: go vet ./...
+
+      - name: Run tests (race + coverage)
+        run: go test -race -count=1 -coverprofile=cover.out ./...
+
+      - name: Coverage summary
+        run: go tool cover -func=cover.out | tail -n1
+
+      - name: Upload coverage artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-${{ matrix.go }}
+          path: cover.out
