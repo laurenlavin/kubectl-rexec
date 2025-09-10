@@ -46,7 +46,7 @@ func rexecHandler(w http.ResponseWriter, r *http.Request) {
 	pod := pathParams["pod"]
 	user := r.Header.Get("X-Remote-User")
 
-	// if any of the mimimal parameters are missing we should bail
+	// if any of the minimal parameters are missing we should bail
 	if user == "" || namespace == "" || pod == "" {
 		w.WriteHeader(http.StatusForbidden)
 		w.Write([]byte(httpForbidden))
@@ -72,7 +72,7 @@ func rexecHandler(w http.ResponseWriter, r *http.Request) {
 	// header which will end up in `admissionReview.Request.UserInfo.Extra`
 	r.Header.Add("Impersonate-Extra-Secret-Sauce", SecretSauce)
 
-	// template old and new url pathes and replace them in the url
+	// template old and new url paths and replace them in the url
 	newPath := fmt.Sprintf("api/v1/namespaces/%s/pods/%s/exec", namespace, pod)
 	oldPath := fmt.Sprintf("apis/audit.adyen.internal/v1beta1/namespaces/%s/pods/%s/exec", namespace, pod)
 	r.URL.Path = strings.ReplaceAll(r.URL.Path, oldPath, newPath)
@@ -86,7 +86,7 @@ func rexecHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// first fetching the command parameters from the url params to check what commands were passed
+	// first fetch the command parameters from the url params to check what commands were passed
 	// initially to the container
 	var initialCommand []string
 	needsRecording := false
@@ -94,7 +94,7 @@ func rexecHandler(w http.ResponseWriter, r *http.Request) {
 		if key == "command" {
 			initialCommand = append(initialCommand, value...)
 		}
-		// we also check wether tty was requested, if so we will need to record the session
+		// we also check whether tty was requested, if so we will need to record the session
 		if key == "tty" {
 			needsRecording = true
 		}
@@ -122,7 +122,7 @@ func rexecHandler(w http.ResponseWriter, r *http.Request) {
 
 		proxy.ServeHTTP(w, r)
 	} else {
-		// in the case of recoding we will pass the request through a tcp proxy to make it easier
+		// in the case of recording we will pass the request through a tcp proxy to make it easier
 		// to actually monitor what is being typed in to the shell
 
 		// we begin to generate a uuid for the session and we set it as the id of a context
@@ -139,7 +139,7 @@ func rexecHandler(w http.ResponseWriter, r *http.Request) {
 		r.WithContext(ctx)
 
 		// Log initial command as an audit event
-		// with sessin id
+		// with session id
 		logCommand(strings.Join(initialCommand, " "), user, ctxid)
 
 		// we start up a tcp forwarder for the session
@@ -175,7 +175,7 @@ func rexecHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// execHandler is responsible auditing exec request and allowing
+// execHandler is responsible for auditing exec request and allowing
 // the ones coming through rexec api along with allowlisted users
 func execHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Header.Get("Content-Type") != "application/json" {
@@ -216,8 +216,8 @@ func execHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write(respBytes)
 }
 
-// waitForListener is simly check wether the personnal tcp
-// forwarder ready or not, if it is not there after 5 secs
+// waitForListener is checking whether the tcp forwarder
+// is ready or not, if it is not there after 5 secs
 // it bails
 func waitForListener(listener string) error {
 	// again, super lazy but it is fine for now
@@ -232,7 +232,7 @@ func waitForListener(listener string) error {
 	return errors.New("socket was not ready in time")
 }
 
-// canPass checks wether the exec request is allowed
+// canPass checks whether the exec request is allowed
 // or not
 func canPass(rv admissionv1.AdmissionReview) bool {
 	// check for users that have a bypass for validating
@@ -242,7 +242,7 @@ func canPass(rv admissionv1.AdmissionReview) bool {
 		}
 	}
 
-	// we will check for shared key so we can validate the request was
+	// we will check for a shared key so we can validate the request was
 	// coming through the rexec endpoint
 	sauce, ok := rv.Request.UserInfo.Extra["secret-sauce"]
 	if ok {
