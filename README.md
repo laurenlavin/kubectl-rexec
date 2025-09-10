@@ -15,6 +15,12 @@ See the [Getting started](https://github.com/Adyen/kubectl-rexec/blob/master/STA
 ## Usage
 See the [Getting started](https://github.com/Adyen/kubectl-rexec/blob/master/STARTED.md) guide.
 
+## Testing
+Tests are currently implemented for the rexec/server
+
+Run the tests like:
+`go test ./rexec/server`
+
 ## Documentation
 See the [Design](https://github.com/Adyen/kubectl-rexec/blob/master/DESIGN.md).
 

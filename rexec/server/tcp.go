@@ -31,7 +31,7 @@ func tcpForwarder(ctx context.Context) {
 	}
 	defer listener.Close()
 
-	SysLogger.Debug().Msgf("starting personal tcp forwarer at " + socketPath)
+	SysLogger.Debug().Msgf("starting personal tcp forwarer at %s", socketPath)
 
 	// in a cheap manner we signer back that it is ready
 	mapSync.Lock()
@@ -50,7 +50,7 @@ func tcpForwarder(ctx context.Context) {
 		select {
 		// once the http session is gone we stop the listener
 		case <-ctx.Done():
-			SysLogger.Debug().Msgf("stopping personal tcp forwarer at " + socketPath)
+			SysLogger.Debug().Msgf("stopping personal tcp forwarer at %s", socketPath)
 			halt = true
 		}
 		if halt {
