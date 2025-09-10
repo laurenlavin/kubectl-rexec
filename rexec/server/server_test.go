@@ -40,6 +40,24 @@ func postExecHandler(t *testing.T, ar admissionv1.AdmissionReview, contentType s
 	return rr, got
 }
 
+// makeAdmissionReview builds a minimal AdmissionReview with kind, username, etc
+func makeAdmissionReview(kind, username string, extra map[string][]string) admissionv1.AdmissionReview {
+	ex := map[string]authv1.ExtraValue{}
+	for k, v := range extra {
+		ex[k] = authv1.ExtraValue(v)
+	}
+	return admissionv1.AdmissionReview{
+		Request: &admissionv1.AdmissionRequest{
+			UID:  "uid-1",
+			Kind: metav1.GroupVersionKind{Kind: kind},
+			UserInfo: authv1.UserInfo{
+				Username: username,
+				Extra:    ex,
+			},
+		},
+	}
+}
+
 // --- execHandler tests ---
 
 func TestExecHandlerUnsupportedContentType(t *testing.T) {
@@ -62,12 +80,8 @@ func TestExecHandlerBadJSON(t *testing.T) {
 }
 
 func TestExecHandlerAllowsNonExecKinds(t *testing.T) {
-	ar := admissionv1.AdmissionReview{
-		Request: &admissionv1.AdmissionRequest{
-			UID:  "123",
-			Kind: metav1.GroupVersionKind{Kind: "Not-PodExecOptions"},
-		},
-	}
+	ar := makeAdmissionReview("Not-PodExecOptions", "", nil)
+
 	rr, parsed := postExecHandler(t, ar, "application/json")
 	if rr.Code != http.StatusOK {
 		t.Fatalf("status = %d, want %d; body=%s", rr.Code, http.StatusOK, rr.Body.String())
@@ -83,17 +97,7 @@ func TestExecHandlerBypassedUser(t *testing.T) {
 
 	ByPassedUsers = []string{"lauren"}
 
-	ar := admissionv1.AdmissionReview{
-		Request: &admissionv1.AdmissionRequest{
-			UID: "u1",
-			Kind: metav1.GroupVersionKind{
-				Kind: "PodExecOptions",
-			},
-			UserInfo: authv1.UserInfo{
-				Username: "lauren",
-			},
-		},
-	}
+	ar := makeAdmissionReview("PodExecOptions", "lauren", nil)
 
 	rr, parsed := postExecHandler(t, ar, "application/json")
 	if rr.Code != http.StatusOK {
@@ -115,18 +119,9 @@ func TestExecHandlerSecretSauce(t *testing.T) {
 	ByPassedUsers = nil
 	SecretSauce = "the-right-sauce"
 
-	ar := admissionv1.AdmissionReview{
-		Request: &admissionv1.AdmissionRequest{
-			UID:  "u2",
-			Kind: metav1.GroupVersionKind{Kind: "PodExecOptions"},
-			UserInfo: authv1.UserInfo{
-				Username: "lauren",
-				Extra: map[string]authv1.ExtraValue{
-					"secret-sauce": {"the-right-sauce"},
-				},
-			},
-		},
-	}
+	ar := makeAdmissionReview("PodExecOptions", "lauren", map[string][]string{
+		"secret-sauce": {"the-right-sauce"},
+	})
 
 	rr, parsed := postExecHandler(t, ar, "application/json")
 	if rr.Code != http.StatusOK {
@@ -148,19 +143,9 @@ func TestExecHandlerExecDenied(t *testing.T) {
 	ByPassedUsers = nil
 	SecretSauce = "the-right-sauce"
 
-	ar := admissionv1.AdmissionReview{
-		Request: &admissionv1.AdmissionRequest{
-			UID:  "u3",
-			Kind: metav1.GroupVersionKind{Kind: "PodExecOptions"},
-			UserInfo: authv1.UserInfo{
-				Username: "lauren",
-				// No matching secret-sauce
-				Extra: map[string]authv1.ExtraValue{
-					"secret-sauce": {"the-wrong-sauce"},
-				},
-			},
-		},
-	}
+	ar := makeAdmissionReview("PodExecOptions", "lauren", map[string][]string{
+		"secret-sauce": {"the-wrong-sauce"},
+	})
 
 	rr, parsed := postExecHandler(t, ar, "application/json")
 	if rr.Code != http.StatusOK {
@@ -182,11 +167,7 @@ func TestCanPassBypassUser(t *testing.T) {
 
 	ByPassedUsers = []string{"lauren"}
 
-	rv := admissionv1.AdmissionReview{
-		Request: &admissionv1.AdmissionRequest{
-			UserInfo: authv1.UserInfo{Username: "lauren"},
-		},
-	}
+	rv := makeAdmissionReview("", "lauren", nil)
 
 	if !canPass(rv) {
 		t.Fatal("expected canPass true for bypassed user")
@@ -204,15 +185,8 @@ func TestCanPassSecretSauceMatch(t *testing.T) {
 	ByPassedUsers = nil
 	SecretSauce = "the-right-sauce"
 
-	rv := admissionv1.AdmissionReview{
-		Request: &admissionv1.AdmissionRequest{
-			UserInfo: authv1.UserInfo{
-				Extra: map[string]authv1.ExtraValue{
-					"secret-sauce": {"the-right-sauce"},
-				},
-			},
-		},
-	}
+	rv := makeAdmissionReview("", "", map[string][]string{
+		"secret-sauce": {"the-right-sauce"}})
 	if !canPass(rv) {
 		t.Fatal("expected canPass true when secret-sauce matches")
 	}
@@ -229,16 +203,8 @@ func TestCanPassNoMatch(t *testing.T) {
 	ByPassedUsers = []string{"lauren"}
 	SecretSauce = "the-right-sauce"
 
-	rv := admissionv1.AdmissionReview{
-		Request: &admissionv1.AdmissionRequest{
-			UserInfo: authv1.UserInfo{
-				Username: "not-lauren",
-				Extra: map[string]authv1.ExtraValue{
-					"secret-sauce": {"the-wrong-sauce"},
-				},
-			},
-		},
-	}
+	rv := makeAdmissionReview("", "not-lauren", map[string][]string{
+		"secret-sauce": {"the-wrong-sauce"}})
 	if canPass(rv) {
 		t.Fatal("expected canPass false when neither bypass nor sauce matches")
 	}
