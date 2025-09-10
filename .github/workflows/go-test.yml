@@ -1,10 +1,7 @@
 name: Go tests
 
 on:
-  workflow_dispatch: {}
   pull_request:
-  push:
-    branches: [ main ]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -18,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        go: ["1.22.x"]   # add "1.21.x" too if you care
+        go: [ '1.25.x' ]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
@@ -33,10 +30,10 @@ jobs:
         run: go build -v ./...
 
       - name: Run tests
-        run: go test -v -race -count=1 ./...
+        run: go test -json -v -race -count=1 ./... > TestResults-${{ matrix.go-version }}.json
 
-      - name: Upload coverage artifact
+      - name: Upload Go test results
         uses: actions/upload-artifact@v4
         with:
-          name: coverage-${{ matrix.go }}
-          path: cover.out
+          name: Go-results-${{ matrix.go-version }}
+          path: TestResults-${{ matrix.go-version }}.json
