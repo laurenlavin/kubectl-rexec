@@ -42,14 +42,14 @@ func postExecHandler(t *testing.T, ar admissionv1.AdmissionReview, contentType s
 
 // --- execHandler tests ---
 
-func TestExecHandler_UnsupportedContentType(t *testing.T) {
+func TestExecHandlerUnsupportedContentType(t *testing.T) {
 	rr, _ := postExecHandler(t, admissionv1.AdmissionReview{}, "text/plain")
 	if rr.Code != http.StatusUnsupportedMediaType {
 		t.Fatalf("status = %d, want %d", rr.Code, http.StatusUnsupportedMediaType)
 	}
 }
 
-func TestExecHandler_BadJSON(t *testing.T) {
+func TestExecHandlerBadJSON(t *testing.T) {
 	req := httptest.NewRequest(http.MethodPost, "/validate-exec", bytes.NewReader([]byte("{bad-json")))
 	req.Header.Set("Content-Type", "application/json")
 	rr := httptest.NewRecorder()
@@ -61,7 +61,7 @@ func TestExecHandler_BadJSON(t *testing.T) {
 	}
 }
 
-func TestExecHandler_AllowsNonExecKinds(t *testing.T) {
+func TestExecHandlerAllowsNonExecKinds(t *testing.T) {
 	ar := admissionv1.AdmissionReview{
 		Request: &admissionv1.AdmissionRequest{
 			UID:  "123",
@@ -77,7 +77,7 @@ func TestExecHandler_AllowsNonExecKinds(t *testing.T) {
 	}
 }
 
-func TestExecHandler_PodExec_BypassedUser(t *testing.T) {
+func TestExecHandlerBypassedUser(t *testing.T) {
 	oldBypass := ByPassedUsers
 	t.Cleanup(func() { ByPassedUsers = oldBypass })
 
@@ -104,7 +104,7 @@ func TestExecHandler_PodExec_BypassedUser(t *testing.T) {
 	}
 }
 
-func TestExecHandler_PodExec_SecretSauce(t *testing.T) {
+func TestExecHandlerSecretSauce(t *testing.T) {
 	oldBypass := ByPassedUsers
 	oldSauce := SecretSauce
 	t.Cleanup(func() {
@@ -137,7 +137,7 @@ func TestExecHandler_PodExec_SecretSauce(t *testing.T) {
 	}
 }
 
-func TestExecHandler_PodExec_Denied(t *testing.T) {
+func TestExecHandlerExecDenied(t *testing.T) {
 	oldBypass := ByPassedUsers
 	oldSauce := SecretSauce
 	t.Cleanup(func() {
@@ -176,7 +176,7 @@ func TestExecHandler_PodExec_Denied(t *testing.T) {
 
 // --- canPass unit tests ---
 
-func TestCanPass_BypassUser(t *testing.T) {
+func TestCanPassBypassUser(t *testing.T) {
 	oldBypass := ByPassedUsers
 	t.Cleanup(func() { ByPassedUsers = oldBypass })
 
@@ -193,7 +193,7 @@ func TestCanPass_BypassUser(t *testing.T) {
 	}
 }
 
-func TestCanPass_SecretSauceMatch(t *testing.T) {
+func TestCanPassSecretSauceMatch(t *testing.T) {
 	oldBypass := ByPassedUsers
 	oldSauce := SecretSauce
 	t.Cleanup(func() {
@@ -218,7 +218,7 @@ func TestCanPass_SecretSauceMatch(t *testing.T) {
 	}
 }
 
-func TestCanPass_NoMatch(t *testing.T) {
+func TestCanPassNoMatch(t *testing.T) {
 	oldBypass := ByPassedUsers
 	oldSauce := SecretSauce
 	t.Cleanup(func() {
@@ -246,7 +246,7 @@ func TestCanPass_NoMatch(t *testing.T) {
 
 // --- waitForListener unit test ---
 
-func TestWaitForListener_Ready(t *testing.T) {
+func TestWaitForListenerReady(t *testing.T) {
 	// Save/restore shared map
 	oldProxyMap := proxyMap
 	t.Cleanup(func() { proxyMap = oldProxyMap })
@@ -269,7 +269,7 @@ func TestWaitForListener_Ready(t *testing.T) {
 
 // --- rexecHandler early validation test ---
 
-func TestRexecHandler_MissingUserIsForbidden(t *testing.T) {
+func TestRexecHandlerMissingUser(t *testing.T) {
 	// No X-Remote-User header
 	req := httptest.NewRequest(http.MethodGet,
 		"/apis/audit.adyen.internal/v1beta1/namespaces/ns/pods/pod/exec", nil)
