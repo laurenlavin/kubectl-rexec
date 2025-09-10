@@ -42,13 +42,8 @@ func postExecHandler(t *testing.T, ar admissionv1.AdmissionReview, contentType s
 
 // --- execHandler tests ---
 
-func TestExecHandler_RejectsNonJSON(t *testing.T) {
-	req := httptest.NewRequest(http.MethodPost, "/validate-exec", bytes.NewReader([]byte("not json")))
-	req.Header.Set("Content-Type", "text/plain")
-	rr := httptest.NewRecorder()
-
-	execHandler(rr, req)
-
+func TestExecHandler_UnsupportedContentType(t *testing.T) {
+	rr, _ := postExecHandler(t, admissionv1.AdmissionReview{}, "text/plain")
 	if rr.Code != http.StatusUnsupportedMediaType {
 		t.Fatalf("status = %d, want %d", rr.Code, http.StatusUnsupportedMediaType)
 	}
